@@ -1,0 +1,17 @@
+[project]
+name = "solitons1d"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "ipykernel>=6.29.5",
+    "numpy>=2.3.0",
+]
+
+[project.scripts]
+solitons1d = "solitons1d:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
