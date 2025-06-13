@@ -1,28 +1,6 @@
 import numpy as np
 from typing import Callable
-
-
-
-# This will generate a profile for a 1D soliton
-
-def create_profile(num_grid_points: int) -> np.array:
-    """
-    Creates a profile function for a grid with 
-    `num_grid_points` points.
-
-    Parameters
-    ----------
-    num_grid_points: int
-        Number of grid points
-
-    Returns
-    -------
-    profile: np.array
-        Generated profile function 
-    """
-
-    profile = np.zeros(num_grid_points)
-    return profile
+import matplotlib.pyplot as plt
 
 
 
@@ -104,7 +82,7 @@ class Lagrangian:
                 )
 
 
-
+# Soliton class
 class Soliton:
     """
     A class describing a Soliton.
@@ -155,12 +133,24 @@ class Soliton:
         )
         self.energy = energy
 
+    def plot_soliton(self):
+        """Makes a plot of the profile function of your soliton"""
+
+        fig, ax = plt.subplots()
+        ax.plot(self.grid.grid_points, self.profile)
+        ax.set_title(f"Profile function. Energy = {self.energy:.4f}")
+
+        return fig
+        
+
+
+# Energy fast function
 def compute_energy_fast(V, profile, num_grid_points, grid_spacing):
 
     total_energy = 0
     return total_energy
 
-
+# Profile function
 def create_profile(
     grid_points: np.array,
     initial_profile_function: Callable[[np.array], np.array] | None = None,
@@ -185,4 +175,101 @@ def create_profile(
     return profile
 
 
+# Compute derivatives
 
+#So, we’ll write functions to compute the first and (while we’re at it) second derivatives of a function. (This is going to be a FAST function, so we don’t want it to interact with the class):
+
+# First derivative
+def get_first_derivative(
+    phi: np.ndarray, 
+    num_grid_points: int, 
+    grid_spacing: float,
+) -> np.ndarray:
+    """
+    For a given array, computes the first derivative of that array.
+
+    Parameters
+    ----------
+    phi: np.ndarray
+        Array to get the first derivative of
+    num_grid_points: int
+        Length of the array
+    grid_spacing: float
+        Grid spacing of underlying grid
+
+    Returns
+    -------
+    d_phi: np.ndarray
+        The first derivative of `phi`.
+
+    """
+    d_phi = np.zeros(num_grid_points)
+    for i in np.arange(num_grid_points)[2:-2]:
+        d_phi[i] = (phi[i - 2] - 8 * phi[i - 1] + 8 * phi[i + 1] - phi[i + 2]) / (
+            12.0 * grid_spacing
+        )
+
+    return d_phi
+
+# Second derivative
+def get_second_derivative(
+    phi: np.ndarray, 
+    num_grid_points: int, 
+    grid_spacing: float,
+) -> np.ndarray:
+    """
+    For a given array, computes the first derivative of that array.
+
+    Parameters
+    ----------
+    phi: np.ndarray
+        Array to get the first derivative of
+    num_grid_points: int
+        Length of the array
+    grid_spacing: float
+        Grid spacing of underlying grid
+
+    Returns
+    -------
+    d_phi: np.ndarray
+        The first derivative of `phi`.
+
+    """
+    ddV = np.zeros(num_grid_points)
+    for i in np.arange(num_grid_points)[2:-2]:
+        ddV[i] = (
+            -phi[i - 2] + 16 * phi[i - 1] - 30 * phi[i] + 16 * phi[i + 1] - phi[i + 2]
+        ) / (12.0 * np.pow(grid_spacing, 2))
+
+    return ddV
+
+# Compute the total energy
+def compute_energy_fast(
+    V: Callable[[float], float],
+    profile: np.array, 
+    num_grid_points: int, 
+    grid_spacing: float,
+) -> float:
+    """
+    Computes the energy of a Lagrangian of the form
+        E = 1/2 (d_phi)^2 + V(phi)
+
+    Parameters
+    ----------
+    V: function
+        The potential energy function
+    profile: np.ndarray
+        The profile function of the soliton
+    num_grid_points: int
+        Length of `profile`
+    grid_spacing: float
+        Grid spacing of underlying grid
+    """
+    dx_profile = get_first_derivative(profile, num_grid_points, grid_spacing)
+
+    kin_eng = 0.5 * np.pow(dx_profile, 2)
+    pot_eng = V(profile)
+
+    tot_eng = np.sum(kin_eng + pot_eng) * grid_spacing
+
+    return tot_eng
