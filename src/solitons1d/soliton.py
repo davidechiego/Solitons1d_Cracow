@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 
 
 
-# Define the Grid class
+## Define the Grid class
 
 # A user can create a grid by specifying the number of grid points and the grid spacing. The Grid will then compute a grid (saved as numpy array) and save the length of the grid.
 
@@ -44,14 +44,14 @@ class Grid:
 
 
 
-# Define the Lagrangian class
+## Define the Lagrangian class
 
 # The Lagrangian will keep track of the potential function. We won’t set up automatic differentiation, so we’ll also give the Lagrangian the derivative of the potential. We’ll also optionally allow the user to input the vacua of the theory. If they do, we’ll add a check that the derivative function of the vacua return 0. This class could also be where we define how many fields our theory has, any funny metric, and more. But let’s keep it simple for now.
 
 class Lagrangian:
     """
     Used to represent Lagrangians of the form:
-        L = - 1/2(dx_phi)^2 - V(phi)
+        L = - 1/2(dx_phi)^2 - V(phi)   [Static Lagrangian!]
 
     Parameters
     ----------
@@ -81,76 +81,10 @@ class Lagrangian:
                     f"The given vacua do not satisfy dV({vacuum}) = 0"
                 )
 
-
-# Soliton class
-class Soliton:
-    """
-    A class describing a Soliton.
-
-    Parameters
-    ----------
-    grid : Grid
-        The grid underpinning the soliton.
-    lagrangian : Lagrangian
-        The Lagrangian of the theory supporting the soliton.
-    initial_profile_function : None | function
-        The initial profile function, must be from R -> R. Optional.
-    initial_profile : None | array-like
-        The initial profile function as an array. Optional.
-    """
-
-    def __init__(
-        self,
-        grid: Grid,
-        lagrangian: Lagrangian,
-        initial_profile_function: Callable[[float], float] | None = None,
-        initial_profile: np.ndarray | None = None,
-    ):
-        self.grid = grid
-        self.lagrangian = lagrangian
-
-        self.profile = np.zeros(grid.num_grid_points)
-
-        assert (initial_profile_function is None) or (initial_profile is None), (
-            "Please only specify `initial_profile_function` or `profile_function`"
-        )
-
-        if initial_profile_function is not None:
-            self.profile = create_profile(self.grid.grid_points, initial_profile_function)
-        else:
-            self.profile = initial_profile
-
-        self.energy = self.compute_energy()
-
-    def compute_energy(self):
-        """Computes the energy of a soliton, and stores this in `Soliton.energy`."""
-
-        energy = compute_energy_fast(
-            self.lagrangian.V,
-            self.profile,
-            self.grid.num_grid_points,
-            self.grid.grid_spacing,
-        )
-        self.energy = energy
-
-    def plot_soliton(self):
-        """Makes a plot of the profile function of your soliton"""
-
-        fig, ax = plt.subplots()
-        ax.plot(self.grid.grid_points, self.profile)
-        ax.set_title(f"Profile function. Energy = {self.energy:.4f}")
-
-        return fig
         
 
 
-# Energy fast function
-def compute_energy_fast(V, profile, num_grid_points, grid_spacing):
-
-    total_energy = 0
-    return total_energy
-
-# Profile function
+## Profile function
 def create_profile(
     grid_points: np.array,
     initial_profile_function: Callable[[np.array], np.array] | None = None,
@@ -175,7 +109,8 @@ def create_profile(
     return profile
 
 
-# Compute derivatives
+
+## Compute derivatives
 
 #So, we’ll write functions to compute the first and (while we’re at it) second derivatives of a function. (This is going to be a FAST function, so we don’t want it to interact with the class):
 
@@ -243,7 +178,9 @@ def get_second_derivative(
 
     return ddV
 
-# Compute the total energy
+
+
+## Compute energy fast function
 def compute_energy_fast(
     V: Callable[[float], float],
     profile: np.array, 
@@ -273,3 +210,70 @@ def compute_energy_fast(
     tot_eng = np.sum(kin_eng + pot_eng) * grid_spacing
 
     return tot_eng
+
+
+
+## Soliton class
+class Soliton:
+    """
+    A class describing a Soliton.
+
+    Parameters
+    ----------
+    grid : Grid
+        The grid underpinning the soliton.
+    lagrangian : Lagrangian
+        The Lagrangian of the theory supporting the soliton.
+    initial_profile_function : None | function
+        The initial profile function, must be from R -> R. Optional.
+    initial_profile : None | array-like
+        The initial profile function as an array. Optional.
+    """
+    # Initialize
+    def __init__(
+        self,
+        grid: Grid,
+        lagrangian: Lagrangian,
+        initial_profile_function: Callable[[float], float] | None = None,
+        initial_profile: np.ndarray | None = None,
+    ):
+        self.grid = grid
+        self.lagrangian = lagrangian
+
+        self.profile = np.zeros(grid.num_grid_points)
+
+        assert (initial_profile_function is None) or (initial_profile is None), (
+            "Please only specify `initial_profile_function` or `profile_function`"
+        )
+
+        if initial_profile_function is not None:
+            self.profile = create_profile(self.grid.grid_points, initial_profile_function)
+        else:
+            self.profile = initial_profile
+
+        self.energy = self.compute_energy()
+
+    # Compute energy
+    def compute_energy(self):
+        """Computes the energy of a soliton, and stores this in `Soliton.energy`."""
+
+        energy = compute_energy_fast(
+            self.lagrangian.V,
+            self.profile,
+            self.grid.num_grid_points,
+            self.grid.grid_spacing,
+        )
+        self.energy = energy
+
+    # Plot the Soliton
+    def plot_soliton(self):
+        """Makes a plot of the profile function of your soliton"""
+
+        fig, ax = plt.subplots()
+        ax.plot(self.grid.grid_points, self.profile)
+        ax.set_title(f"Profile function. Energy = {self.energy:.4f}")
+        ax.grid()
+        ax.set_xlabel("x")
+        ax.set_ylabel(r"$\phi(x)$")
+
+        return fig
